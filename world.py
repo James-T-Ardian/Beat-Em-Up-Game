@@ -14,8 +14,11 @@ class World:
 
     def run(self):
         self.player.update()
+        
+        # Draws rectangle and hitbox of player. Delete later
         pygame.draw.rect(self.screen, 'White', self.player.sprite.rect, 3)
         pygame.draw.rect(self.screen, 'red', self.player.sprite.hitbox, 3)
+        
         self.player.draw(self.screen)
         
 
