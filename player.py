@@ -4,7 +4,7 @@ from pygame_image_analyzer import *
 class Player(pygame.sprite.Sprite):
     def __init__(self, pos):
         super().__init__()
-        self.image = pygame.image.load('sprites/player/idle/right/tile000.png').convert_alpha()
+        self.image = pygame.image.load('sprites/player/idle/tile000.png').convert_alpha()
 
         # rect to determine character location and hitbox to determine character collision 
         self.rect = self.image.get_rect(topleft = pos)
