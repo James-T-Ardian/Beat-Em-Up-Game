@@ -24,10 +24,10 @@ while game_run:
             pygame.quit()
             sys.exit()
         
-        screen.blit(background,(0,0))
-        world.run()
+    screen.blit(background,(0,0))
+    world.run()
 
-        pygame.display.update()
-        clock.tick(60)
+    pygame.display.update()
+    clock.tick(60)
     
     
