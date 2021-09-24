@@ -14,7 +14,8 @@ class World:
         
         # Draws rectangle and hitbox of player. Delete later
         pygame.draw.rect(self.screen, 'White', self.player.sprite.rect, 3)
-        pygame.draw.rect(self.screen, 'red', self.player.sprite.hitbox, 3)
+        pygame.draw.rect(self.screen, 'red', self.player.sprite.player_hitbox, 3)
+        pygame.draw.rect(self.screen, 'pink', self.player.sprite.weapon_hitbox, 3)
         
         self.player.draw(self.screen)
         
