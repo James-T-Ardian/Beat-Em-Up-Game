@@ -3,7 +3,6 @@ import sys
 from player import *
 from world import *
 from enemies import *
-from enemy_projectiles import *
 
 pygame.init()
 

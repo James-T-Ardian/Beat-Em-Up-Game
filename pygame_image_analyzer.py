@@ -1,4 +1,5 @@
 import pygame
+
 # Get hitbox by creating a rectangle bounding only parts of the image that is not transparent 
 def getMaskRect(surf, top, left):
         surf_mask = pygame.mask.from_surface(surf)
