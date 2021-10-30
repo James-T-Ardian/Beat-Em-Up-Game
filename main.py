@@ -2,7 +2,6 @@ import pygame
 import sys
 from player import *
 from world import *
-from enemies import *
 
 pygame.init()
 

@@ -1,32 +1,42 @@
 import pygame
-from support_functions import *
+from os import walk
 
-GROUND_Y = 450
 LEFT = -1
 RIGHT = 1
 UP = -1
 DOWN = 1
 IN_PLACE = 0
 
+# Player character in pygame.
+#
+#   Input: pos -> Position of character on screen in (x ,y) tuple form. Y POSITION MUST ALWAYS BE GROUND.  
+#          control -> Array that specifies character controls using pygame key inputs (ex. pygame.K_b for b) where position
+#                     in array determines which action it corresponds to. In [jump, attack, dash, right, left] form. 
+#
 class Player(pygame.sprite.Sprite):
-    def __init__(self, pos):
+    def __init__(self, pos, control):
         super().__init__()
+
+        # Imports character frames for animation
         self._import_character_assets()
+
+        # Animation variables 
         self.frame_index = 0
         self.animation_speed = 0.2
         self.image = self.animations['idle'][self.frame_index]
         
-
         # Rect to determine character, player hitbox and weapon hitbox
         self.rect = self.image.get_rect(topleft = pos)
         self.player_hitbox = getMaskRect(self.image ,*self.image.get_rect(topleft = pos).topleft).move(-2,0)
         self.weapon_hitbox = pygame.Rect.copy(self.player_hitbox)
+        self.starting_pos = pos
 
         # Movement variables
         self.move_speed = 3
         self.apply_gravity = False
         self.jump_speed = 60
         self.gravity = 3
+
         # Three direction variables: for normal movement, for animation + attack, for dash. All needed to make attack + dash combos not wonky.
         self.direction = pygame.math.Vector2(0,0)
         self.facing_right = True
@@ -42,6 +52,10 @@ class Player(pygame.sprite.Sprite):
 
         # Player states = 'attack', 'dash', 'idle', 'jump', 'run'
         self.state = 'idle'
+
+        # Player keyboard controls
+        self.jump_key, self.attack_key, self.dash_key, self.right_key, self.left_key = control
+    
     
     def _import_character_assets(self):
         character_path = 'sprites/player/'
@@ -56,14 +70,14 @@ class Player(pygame.sprite.Sprite):
         now = pygame.time.get_ticks()
 
         # Move right or left. Cant change dash direction too early in dash. Cant change attack + animation direction mid attack. 
-        if keys[pygame.K_RIGHT]:
+        if keys[self.right_key]:
             self.state = 'run'
             if now - self.last_attack > self.attack_cooldown / 2.5:
                 self.facing_right = True
             if now - self.last_dash > self.dash_cooldown / 2.5:
                 self.dash_right = True
                 self.direction.x = RIGHT
-        elif keys[pygame.K_LEFT]: 
+        elif keys[self.left_key]: 
             self.state = 'run'
             if now - self.last_attack > self.attack_cooldown / 2.5:
                 self.facing_right = False
@@ -76,7 +90,7 @@ class Player(pygame.sprite.Sprite):
             self.dash_right = self.facing_right
 
         # Jump
-        if keys[pygame.K_z] and not self.apply_gravity and now - self.last_jump >= self.jump_cooldown:
+        if keys[self.jump_key] and not self.apply_gravity and now - self.last_jump >= self.jump_cooldown:
             self.last_jump = now
             self.state = 'jump'
             self.direction.y = UP
@@ -85,7 +99,7 @@ class Player(pygame.sprite.Sprite):
             self.state = 'jump'
         
         # Dash
-        if keys[pygame.K_c] and now - self.last_dash >= self.dash_cooldown and now - self.last_attack > self.attack_cooldown / 2.8:
+        if keys[self.dash_key] and now - self.last_dash >= self.dash_cooldown and now - self.last_attack > self.attack_cooldown / 2.8:
             self.state = 'dash'
             self.last_dash = now
             self.move_speed = 50
@@ -101,7 +115,7 @@ class Player(pygame.sprite.Sprite):
             self.move_speed = 3
         
         # Attack
-        if keys[pygame.K_x] and now - self.last_attack >= self.attack_cooldown:
+        if keys[self.attack_key] and now - self.last_attack >= self.attack_cooldown:
             self.last_attack = now
             self.state = 'attack'
             self.move_speed = 0
@@ -123,11 +137,15 @@ class Player(pygame.sprite.Sprite):
         if self.apply_gravity:
             self.direction.y = DOWN
 
-        if self.rect.y == GROUND_Y:
+        if self.rect.y == self.starting_pos[1]:
             self.direction.y = IN_PLACE
             self.apply_gravity = False
     
     def _update_image_and_hitboxes_location(self):
+        # To make sure player does not go out of bounds of screen
+        if -20 > self.rect.x and self.direction.x == LEFT or self.rect.x > pygame.display.get_window_size()[0] - 40 and self.direction.x == RIGHT:
+            self.direction.x = IN_PLACE
+
         self.rect.x += self.direction.x * self.move_speed
         self.rect.y += self.direction.y * self.gravity if self.apply_gravity else self.direction.y * self.jump_speed 
         self.player_hitbox.x += self.direction.x * self.move_speed
@@ -151,5 +169,26 @@ class Player(pygame.sprite.Sprite):
         self._update_image_and_hitboxes_location()
         self._animate()
         self._gravity()
+
+# Get files from folder
+def import_folder(path):
+	surface_list = []
+
+	for _,__,img_files in walk(path):
+		for image in img_files:
+			full_path = path + '/' + image
+			image_surf = pygame.image.load(full_path).convert_alpha()
+			surface_list.append(image_surf)
+
+	return surface_list
+
+# Get hitbox by creating a rectangle bounding only parts of the image that is not transparent 
+def getMaskRect(surf, top, left):
+        surf_mask = pygame.mask.from_surface(surf)
+        rect_list = surf_mask.get_bounding_rects()
+        surf_mask_rect = rect_list[0].unionall(rect_list)
+        surf_mask_rect.move_ip(top, left)
+        return surf_mask_rect
+
 
 
