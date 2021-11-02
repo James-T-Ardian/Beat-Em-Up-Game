@@ -9,12 +9,13 @@ IN_PLACE = 0
 
 # Player character in pygame.
 #
-#   Input: pos -> Position of character on screen in (x ,y) tuple form. Y POSITION MUST ALWAYS BE GROUND.  
-#          control -> Array that specifies character controls using pygame key inputs (ex. pygame.K_b for b) where position
+#   Input: pos -> character topleft coordinate on screen in (x ,y) tuple form. Y POSITION MUST ALWAYS BE GROUND.  
+#          control -> array that specifies character controls using pygame key inputs (ex. pygame.K_b for b) where position
 #                     in array determines which action it corresponds to. In [jump, attack, dash, right, left] form. 
+#          face_right -> bolean value that determines whether character faces right at the start
 #
 class Player(pygame.sprite.Sprite):
-    def __init__(self, pos, control):
+    def __init__(self, pos, control, face_right = True):
         super().__init__()
 
         # Imports character frames for animation
@@ -27,7 +28,7 @@ class Player(pygame.sprite.Sprite):
         
         # Rect to determine character, player hitbox and weapon hitbox
         self.rect = self.image.get_rect(topleft = pos)
-        self.player_hitbox = getMaskRect(self.image ,*self.image.get_rect(topleft = pos).topleft).move(-2,0)
+        self.player_hitbox = _getMaskRect(self.image ,*self.image.get_rect(topleft = pos).topleft).move(-2,0)
         self.weapon_hitbox = pygame.Rect.copy(self.player_hitbox)
         self.starting_pos = pos
 
@@ -39,14 +40,14 @@ class Player(pygame.sprite.Sprite):
 
         # Three direction variables: for normal movement, for animation + attack, for dash. All needed to make attack + dash combos not wonky.
         self.direction = pygame.math.Vector2(0,0)
-        self.facing_right = True
+        self.facing_right = face_right
         self.dash_right = True
 
         # Cooldowns
         self.last_dash = pygame.time.get_ticks() - 1000
         self.dash_cooldown = 700
         self.last_attack = pygame.time.get_ticks() - 1000
-        self.attack_cooldown = 700
+        self.attack_cooldown = 1000
         self.last_jump = pygame.time.get_ticks() - 1000
         self.jump_cooldown = 500
 
@@ -56,14 +57,13 @@ class Player(pygame.sprite.Sprite):
         # Player keyboard controls
         self.jump_key, self.attack_key, self.dash_key, self.right_key, self.left_key = control
     
-    
     def _import_character_assets(self):
         character_path = 'sprites/player/'
         self.animations = {'attack':[], 'dash':[], 'idle':[], 'jump':[], 'run':[]}
 
         for animation in self.animations.keys():
             full_path = character_path + animation
-            self.animations[animation] = import_folder(full_path)
+            self.animations[animation] = _import_folder(full_path)
 
     def _get_input(self):
         keys = pygame.key.get_pressed()
@@ -123,7 +123,7 @@ class Player(pygame.sprite.Sprite):
         # Make attack smoother and generate weapon hitbox only after some delay 
         elif now - self.last_attack <= self.attack_cooldown / 2.5: 
             self.state = 'attack'
-            if now - self.last_attack > self.attack_cooldown / 2.9:
+            if now - self.last_attack > self.attack_cooldown / 5:
                 self.weapon_hitbox.update(self.player_hitbox.x + (25 if self.facing_right else -25),self.player_hitbox.y,self.player_hitbox.width, self.player_hitbox.height)
             self.move_speed = 0
             self.direction.y = IN_PLACE
@@ -163,7 +163,6 @@ class Player(pygame.sprite.Sprite):
         else:
             self.image = pygame.transform.flip(animation[int(self.frame_index)], True, False)
             
-
     def update(self):
         self._get_input()
         self._update_image_and_hitboxes_location()
@@ -171,7 +170,7 @@ class Player(pygame.sprite.Sprite):
         self._gravity()
 
 # Get files from folder
-def import_folder(path):
+def _import_folder(path):
 	surface_list = []
 
 	for _,__,img_files in walk(path):
@@ -183,7 +182,7 @@ def import_folder(path):
 	return surface_list
 
 # Get hitbox by creating a rectangle bounding only parts of the image that is not transparent 
-def getMaskRect(surf, top, left):
+def _getMaskRect(surf, top, left):
         surf_mask = pygame.mask.from_surface(surf)
         rect_list = surf_mask.get_bounding_rects()
         surf_mask_rect = rect_list[0].unionall(rect_list)
