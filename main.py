@@ -157,7 +157,7 @@ def end_screen(result):
                 world.setup_world()
                 game()
             elif event.type == pygame.MOUSEBUTTONDOWN and back_button.sprite.rect.collidepoint(mouse_pos):
-                controls_running = False
+                end_screen_running = False
                 main_menu()
         
 

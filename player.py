@@ -131,12 +131,11 @@ class Player(pygame.sprite.Sprite):
             self.weapon_hitbox.update(0,0,self.player_hitbox.width, self.player_hitbox.height)
  
     def _gravity(self):
+        # When player not at ground, gravity is applied :O
         if self.direction.y == UP:
             self.apply_gravity = True
-
         if self.apply_gravity:
             self.direction.y = DOWN
-
         if self.rect.y == self.starting_pos[1]:
             self.direction.y = IN_PLACE
             self.apply_gravity = False
@@ -151,6 +150,7 @@ class Player(pygame.sprite.Sprite):
         self.player_hitbox.x += self.direction.x * self.move_speed
         self.player_hitbox.y += self.direction.y * self.gravity if self.apply_gravity else self.direction.y * self.jump_speed 
 
+    
     def _animate(self):
         animation = self.animations[self.state]
 
